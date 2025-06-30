@@ -2,7 +2,7 @@
   <div class="h-screen w-screen bg-gray-900 text-white overflow-hidden">
     <div class="flex h-full">
       <!-- Left Sidebar (25% width) -->
-      <div class="w-1/4 bg-gray-800 p-6 flex flex-col">
+      <div class="w-1/5 bg-gray-800 p-6 flex flex-col">
         <!-- Clock -->
         <div class="mb-8">
           <div class="text-6xl font-light mb-2">{{ currentTime }}</div>
@@ -11,38 +11,29 @@
 
         <!-- Today's Agenda -->
         <div class="flex-1 overflow-hidden">
-          <h2 class="text-2xl font-semibold mb-4 text-blue-400">Today's Agenda</h2>
-          
-          <!-- Loading State -->
-          <div v-if="pending" class="flex items-center justify-center py-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
-          </div>
-
-          <!-- Error State -->
-          <div v-else-if="error" class="bg-red-900 bg-opacity-50 border border-red-700 rounded-lg p-3 mb-4">
-            <p class="text-red-300 text-sm">{{ error.message }}</p>
-          </div>
-
-          <!-- Today's Events -->
-          <div v-else class="space-y-3 overflow-y-auto max-h-full">
-            <div v-if="todayEvents.length === 0" class="text-gray-400 text-center py-8">
-              <div class="text-4xl mb-2">✨</div>
-              <p>No events today</p>
-            </div>
-            
-            <div 
-              v-for="event in todayEvents" 
-              :key="event.id"
-              class="bg-gray-700 rounded-lg p-3 border-l-4"
-              :style="{ borderLeftColor: event.color }"
-            >
-              <div class="font-medium text-sm mb-1">{{ event.title }}</div>
-              <div class="text-xs text-gray-300 mb-1">
-                {{ formatTime(event.start) }} - {{ formatTime(event.end) }}
+          <!-- Day View Time Grid (7am to 10pm) -->
+          <div class="relative h-full overflow-y-auto bg-gray-800 rounded-lg">
+            <div class="absolute left-0 top-0 w-full h-full pointer-events-none">
+              <!-- Horizontal line above 7am -->
+              <div class="absolute left-0 top-0 w-full border-b border-gray-700" style="height:0;"></div>
+              <div v-for="hour in 15" :key="hour" class="h-[60px] border-b border-gray-700 flex items-start">
+                <span class="w-12 text-xs text-gray-400 text-right pr-2 select-none" style="min-width:3rem;">{{ formatHour(hour+6) }}</span>
               </div>
-              <div v-if="event.location" class="text-xs text-gray-400 flex items-center">
-                <span class="mr-1">📍</span>
-                {{ event.location }}
+            </div>
+            <div class="relative z-10" style="height: 900px;"> <!-- 15 hours * 60px per hour = 900px -->
+              <div v-for="event in todayEvents" :key="event.id"
+                :style="Object.assign({}, getEventStyleDayView(event), { borderLeftColor: event.color || '#60a5fa' })"
+                class="absolute left-16 right-2 bg-gray-700 rounded-lg border-l-4 py-1 px-2 shadow-md"
+                :class="{'border-blue-400': !event.color}"
+              >
+                <div class="font-medium text-xs">{{ event.title }}</div>
+                <div v-if="getEventDurationMinutes(event) >= 45" class="text-xs text-gray-300">
+                  {{ formatTime(event.start) }} - {{ formatTime(event.end) }}
+                </div>
+                <div v-if="event.location" class="text-xs text-gray-400 flex items-center">
+                  <span class="mr-1">📍</span>
+                  {{ event.location }}
+                </div>
               </div>
             </div>
           </div>
@@ -55,7 +46,7 @@
           <!-- Header -->
           <div class="mb-6">
             <div class="flex items-center justify-between">
-              <h1 class="text-4xl font-light">Bauer Family Calendar - {{ weekRangeText }}</h1>
+              <h1 class="text-4xl font-light">Family Calendar: {{ weekRangeText }}</h1>
               <div class="text-right">
                 <div v-if="pending" class="flex items-center text-blue-400 text-sm">
                   <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400 mr-2"></div>
@@ -69,7 +60,7 @@
           </div>
 
           <!-- Two-Week Calendar Grid -->
-          <div class="grid grid-cols-7 gap-2 h-5/6">
+          <div class="grid grid-cols-7 gap-2 h-[80vh]">
             <!-- Day Headers -->
             <div 
               v-for="day in dayHeaders" 
@@ -83,9 +74,8 @@
             <div 
               v-for="day in calendarDays" 
               :key="day.date"
-              class="bg-gray-800 rounded-lg p-3 flex flex-col min-h-48"
+              class="bg-gray-800 rounded-lg p-3 flex flex-col min-h-75"
               :class="{
-                'bg-blue-900 bg-opacity-50': day.isToday,
                 'opacity-50': !day.isCurrentMonth
               }"
             >
@@ -94,7 +84,7 @@
                 class="text-right mb-2 font-medium"
                 :class="{
                   'text-blue-400': day.isToday,
-                  'text-gray-300': day.isCurrentMonth && !day.isToday,
+                  'text-gray-300': !day.isToday,
                   'text-gray-500': !day.isCurrentMonth
                 }"
               >
@@ -104,7 +94,7 @@
               <!-- Events for this day -->
               <div class="flex-1 space-y-1 overflow-y-auto day-events-container">
                 <div 
-                  v-for="event in day.events.slice(0, 8)" 
+                  v-for="event in day.events.slice(0, 10)" 
                   :key="event.id"
                   class="text-xs p-1 rounded text-white flex items-start"
                   :style="{ backgroundColor: event.color }"
@@ -115,12 +105,19 @@
                   </span>
                 </div>
                 <div 
-                  v-if="day.events.length > 8" 
+                  v-if="day.events.length > 10" 
                   class="text-xs text-gray-400 text-center"
                 >
-                  +{{ day.events.length - 8 }} more
+                  +{{ day.events.length - 10 }} more
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Inspirational Quotes Section -->
+          <div class="mt-8 flex flex-col items-center justify-center min-h-[80px]">
+            <div class="text-2xl italic text-gray-200 text-center transition-opacity duration-500" :key="currentQuoteIndex">
+              {{ quotes[currentQuoteIndex] }}
             </div>
           </div>
         </div>
@@ -130,6 +127,7 @@
 </template>
 
 <script setup>
+import quotesData from '../quotes.json'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 // Fetch events from our API
@@ -243,6 +241,32 @@ const weekRangeText = computed(() => {
   return `${firstStr} - ${lastStr}, ${lastDay.getFullYear()}`
 })
 
+// Inspirational Quotes
+const quotes = quotesData.map(q => `"${q.text}" – ${q.author}`)
+const currentQuoteIndex = ref(Math.floor(Math.random() * quotes.length))
+let quoteInterval
+
+onMounted(() => {
+  quoteInterval = setInterval(() => {
+    let nextIndex
+    do {
+      nextIndex = Math.floor(Math.random() * quotes.length)
+    } while (nextIndex === currentQuoteIndex.value)
+    currentQuoteIndex.value = nextIndex
+  }, 20000)
+})
+
+onUnmounted(() => {
+  if (quoteInterval) clearInterval(quoteInterval)
+})
+
+// Helper to get event duration in minutes
+const getEventDurationMinutes = (event) => {
+  const start = new Date(event.start)
+  const end = new Date(event.end)
+  return Math.round((end.getTime() - start.getTime()) / 60000)
+}
+
 // Utility functions
 const formatTime = (dateString) => {
   const date = new Date(dateString)
@@ -262,6 +286,34 @@ const formatLastUpdated = (dateString) => {
   })
 }
 
+// Helper to format hour labels (7am to 10pm)
+const formatHour = (h) => {
+  const hour = h % 24;
+  const ampm = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour-12} PM`;
+  return ampm;
+}
+// Helper to position events in the day view (7am to 10pm)
+const getEventStyleDayView = (event) => {
+  const start = new Date(event.start)
+  const end = new Date(event.end)
+  // Only show events between 7am (420) and 10pm (1320)
+  const gridStart = 7 * 60
+  const gridEnd = 21 * 60
+  let startMinutes = start.getHours() * 60 + start.getMinutes()
+  let endMinutes = end.getHours() * 60 + end.getMinutes()
+  // Clamp to grid
+  if (startMinutes < gridStart) startMinutes = gridStart
+  if (endMinutes > gridEnd) endMinutes = gridEnd
+  if (endMinutes < startMinutes) endMinutes = startMinutes + 30 // minimum 30 min event
+  const top = (startMinutes - gridStart) // in minutes
+  let height = (endMinutes - startMinutes)
+  if (height < 30) height = 30 // minimum height for visibility
+  return {
+    top: `${top + 1}px`,
+    height: `${height - 2}px`
+  }
+}
+
 // Set page meta
 useHead({
   title: 'Family Calendar Dashboard',
@@ -272,25 +324,6 @@ useHead({
 </script>
 
 <style scoped>
-/* Custom scrollbar for webkit browsers */
-::-webkit-scrollbar {
-  width: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
 /* Hide scrollbar for day event containers */
 .day-events-container {
   scrollbar-width: none; /* Firefox */
