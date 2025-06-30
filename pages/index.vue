@@ -130,8 +130,25 @@
 import quotesData from '../quotes.json'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-// Fetch events from our API
-const { data, pending, error, refresh } = await useFetch('/api/events')
+// Fetch events from our API (non-blocking)
+const data = ref(null)
+const pending = ref(true)
+const error = ref(null)
+
+const fetchEvents = async () => {
+  try {
+    pending.value = true
+    const response = await $fetch('/api/events')
+    data.value = response
+    error.value = null
+  } catch (e) {
+    error.value = e
+  } finally {
+    pending.value = false
+  }
+}
+
+fetchEvents()
 
 // Current time and date
 const currentTime = ref('')
@@ -149,7 +166,7 @@ onMounted(() => {
   // Refresh calendar events every 15 minutes (900,000 ms)
   refreshInterval = setInterval(() => {
     console.log('Refreshing calendar events...')
-    refresh()
+    fetchEvents()
   }, 15 * 60 * 1000)
   
   // Reload the entire page once a day (24 hours = 86,400,000 ms)
