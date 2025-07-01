@@ -148,8 +148,6 @@ const fetchEvents = async () => {
   }
 }
 
-fetchEvents()
-
 // Current time and date
 const currentTime = ref('')
 const currentDate = ref('')
@@ -161,6 +159,7 @@ let dailyReloadInterval
 
 onMounted(() => {
   updateTime()
+  fetchEvents()
   timeInterval = setInterval(updateTime, 1000)
   
   // Refresh calendar events every 15 minutes (900,000 ms)
