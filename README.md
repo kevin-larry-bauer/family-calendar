@@ -28,7 +28,12 @@ Transform your Raspberry Pi into a dedicated family calendar display! The includ
 curl -s https://raw.githubusercontent.com/kevin-larry-bauer/family-calendar/main/install-kiosk.sh | bash -s -- https://github.com/your-username/family-calendar.git
 ```
 
-**Option 2: Download and run interactively**
+**Option 2: With custom installation directory**
+```bash
+curl -s https://raw.githubusercontent.com/kevin-larry-bauer/family-calendar/main/install-kiosk.sh | bash -s -- https://github.com/your-username/family-calendar.git /home/pi/apps
+```
+
+**Option 3: Download and run interactively**
 ```bash
 wget https://raw.githubusercontent.com/kevin-larry-bauer/family-calendar/main/install-kiosk.sh
 chmod +x install-kiosk.sh

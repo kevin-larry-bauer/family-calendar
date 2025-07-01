@@ -12,14 +12,31 @@ echo "=================================="
 if [ -n "$1" ]; then
     REPO_URL="$1"
     echo "📍 Using repository URL: $REPO_URL"
+    
+    # Check for optional second parameter (install directory)
+    if [ -n "$2" ]; then
+        INSTALL_DIR="$2"
+        echo "📍 Using custom installation directory: $INSTALL_DIR"
+    else
+        INSTALL_DIR="/home/pi"
+        echo "📍 Using default installation directory: $INSTALL_DIR"
+    fi
 else
     # Try to read from terminal (works when script is run directly)
     if [ -t 0 ]; then
         read -p "Enter your repository URL (e.g., https://github.com/username/family-calendar.git): " REPO_URL
+        read -p "Enter installation directory [/home/pi]: " CUSTOM_INSTALL_DIR
+        if [ -n "$CUSTOM_INSTALL_DIR" ]; then
+            INSTALL_DIR="$CUSTOM_INSTALL_DIR"
+        else
+            INSTALL_DIR="/home/pi"
+        fi
+        echo "📍 Using installation directory: $INSTALL_DIR"
     else
         echo "❌ Repository URL is required when running via pipe"
-        echo "💡 Usage: $0 <repository-url>"
+        echo "💡 Usage: $0 <repository-url> [install-directory]"
         echo "💡 Example: $0 https://github.com/username/family-calendar.git"
+        echo "💡 Example with custom directory: $0 https://github.com/username/family-calendar.git /home/pi/apps"
         echo "💡 Or download and run directly:"
         echo "   wget https://raw.githubusercontent.com/username/family-calendar/main/install-kiosk.sh"
         echo "   chmod +x install-kiosk.sh"
@@ -33,12 +50,16 @@ if [ -z "$REPO_URL" ]; then
     exit 1
 fi
 
-# Default paths
-INSTALL_DIR="/home/pi"
 REPO_DIR="$INSTALL_DIR/family-calendar"
 
 echo "📁 Using installation directory: $INSTALL_DIR"
 echo "📂 Repository will be cloned to: $REPO_DIR"
+
+# Create installation directory if it doesn't exist
+if [ ! -d "$INSTALL_DIR" ]; then
+    echo "📁 Creating installation directory: $INSTALL_DIR"
+    mkdir -p "$INSTALL_DIR"
+fi
 
 # Download the main startup script
 echo "⬇️  Downloading startup script..."
