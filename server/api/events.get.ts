@@ -56,6 +56,28 @@ export default defineEventHandler(async (event) => {
         const comp = new ICAL.Component(jcalData)
         const vevents = comp.getAllSubcomponents('vevent')
 
+        // Collect recurrence exceptions (modified instances) first
+        const recurrenceExceptions = new Map()
+        for (const vevent of vevents) {
+          const recurrenceId = vevent.getFirstPropertyValue('recurrence-id')
+          if (recurrenceId) {
+            const masterUid = vevent.getFirstPropertyValue('uid')
+            if (!recurrenceExceptions.has(masterUid)) {
+              recurrenceExceptions.set(masterUid, new Map())
+            }
+            // Convert recurrence-id to Date properly
+            let recurrenceDate: Date
+            if (recurrenceId && typeof recurrenceId === 'object' && 'toJSDate' in recurrenceId) {
+              recurrenceDate = (recurrenceId as any).toJSDate()
+            } else if (typeof recurrenceId === 'string') {
+              recurrenceDate = new Date(recurrenceId)
+            } else {
+              continue // Skip if we can't parse the date
+            }
+            recurrenceExceptions.get(masterUid).set(recurrenceDate.getTime(), vevent)
+          }
+        }
+
         // Set up date range for recurring event expansion
         const now = new Date()
         const pastLimit = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
@@ -64,8 +86,38 @@ export default defineEventHandler(async (event) => {
         for (const vevent of vevents) {
           const event = new ICAL.Event(vevent)
           
+          // Skip events that are recurrence exceptions (they're handled separately)
+          if (vevent.getFirstPropertyValue('recurrence-id')) {
+            continue
+          }
+          
           // Check if this is a recurring event
           if (event.isRecurring()) {
+            if (event.summary === 'Movies at the SCERA!') {
+              console.log('Found specific event: Movies at the SCERA!', event)
+            }
+            
+            // Get exception dates (EXDATE) - dates where the recurring event should be excluded
+            const exceptionDates = new Set()
+            const exdateProps = vevent.getAllProperties('exdate')
+            for (const exdateProp of exdateProps) {
+              const exdateValues = exdateProp.getValues()
+              for (const exdateValue of exdateValues) {
+                // Convert to timestamp for easy comparison
+                let exceptionTime: number
+                if (exdateValue && typeof exdateValue === 'object' && 'toJSDate' in exdateValue) {
+                  exceptionTime = (exdateValue as any).toJSDate().getTime()
+                } else if (typeof exdateValue === 'string') {
+                  exceptionTime = new Date(exdateValue).getTime()
+                } else {
+                  continue
+                }
+                exceptionDates.add(exceptionTime)
+              }
+            }
+            
+            // Get recurrence exceptions for this event
+            const eventExceptions = recurrenceExceptions.get(event.uid) || new Map()
             
             // Create an iterator for recurring events
             const iterator = event.iterator()
@@ -74,24 +126,38 @@ export default defineEventHandler(async (event) => {
             // Expand recurring events within our date range
             while ((next = iterator.next())) {
               const startDate = next.toJSDate()
+              const startTime = startDate.getTime()
               
               // Stop if we're beyond our future limit
               if (startDate > futureLimit) break
               
+              // Skip this occurrence if it's in the exception dates
+              if (exceptionDates.has(startTime)) {
+                continue
+              }
+              
+              // Check if there's a modified instance for this occurrence
+              let eventToUse = event
+              let eventVevent = vevent
+              if (eventExceptions.has(startTime)) {
+                eventVevent = eventExceptions.get(startTime)
+                eventToUse = new ICAL.Event(eventVevent)
+              }
+              
               // Include if within our date range
               if (startDate >= pastLimit && startDate <= futureLimit) {
                 // Calculate end date for this occurrence
-                const duration = event.endDate.subtractDate(event.startDate)
+                const duration = eventToUse.endDate.subtractDate(eventToUse.startDate)
                 const endDate = next.clone()
                 endDate.addDuration(duration)
                 
                 const calendarEvent = {
-                  id: `${calendar.name}-${event.uid}-${startDate.getTime()}`, // Unique ID for each occurrence
-                  title: event.summary,
+                  id: `${calendar.name}-${eventToUse.uid}-${startDate.getTime()}`, // Unique ID for each occurrence
+                  title: eventToUse.summary,
                   start: startDate.toISOString(),
                   end: endDate.toJSDate().toISOString(),
-                  description: event.description || '',
-                  location: event.location || '',
+                  description: eventToUse.description || '',
+                  location: eventToUse.location || '',
                   calendar: calendar.name,
                   color: calendar.color,
                   isRecurring: true
