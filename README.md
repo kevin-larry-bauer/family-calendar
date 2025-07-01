@@ -9,6 +9,24 @@ A Nuxt.js application that displays events from multiple Google Calendar feeds i
 - 📱 Responsive design that works on all devices
 - ⚡ Real-time calendar feed parsing
 - 🔧 Easy configuration via JSON file
+- 🖥️ **Raspberry Pi kiosk mode support** - Perfect for dedicated displays!
+
+## 🍓 Raspberry Pi Kiosk Setup
+
+Transform your Raspberry Pi into a dedicated family calendar display! The included scripts will:
+
+- ✅ Automatically pull the latest code on startup
+- ✅ Build for production
+- ✅ Launch in full-screen kiosk mode
+- ✅ Auto-refresh hourly
+- ✅ Restart automatically if it crashes
+
+### Quick Install on Raspberry Pi:
+```bash
+curl -s https://raw.githubusercontent.com/kevin-larry-bauer/family-calendar/main/install-kiosk.sh | bash
+```
+
+See [RASPBERRY_PI_SETUP.md](RASPBERRY_PI_SETUP.md) for detailed instructions.
 
 ## Setup
 

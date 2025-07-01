@@ -1,0 +1,17 @@
+[Unit]
+Description=Family Calendar Kiosk Display
+After=network-online.target graphical-session.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+User=pi
+Group=pi
+WorkingDirectory=/home/pi
+Environment=DISPLAY=:0
+ExecStart=/home/pi/startup-kiosk.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=graphical-session.target
