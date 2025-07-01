@@ -5,7 +5,7 @@
 
 # Configuration - Update these paths for your Raspberry Pi
 REPO_DIR="/home/pi/family-calendar"  # Change this to your actual repo path
-REPO_URL="https://github.com/your-username/family-calendar.git"  # Change to your repo URL
+REPO_URL="https://github.com/kevin-larry-bauer/family-calendar.git"  # Change to your repo URL
 LOG_FILE="/home/pi/family-calendar-startup.log"
 PORT=3000
 

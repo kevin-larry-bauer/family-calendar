@@ -22,8 +22,17 @@ Transform your Raspberry Pi into a dedicated family calendar display! The includ
 - ✅ Restart automatically if it crashes
 
 ### Quick Install on Raspberry Pi:
+
+**Option 1: With repository URL as argument**
 ```bash
-curl -s https://raw.githubusercontent.com/kevin-larry-bauer/family-calendar/main/install-kiosk.sh | bash
+curl -s https://raw.githubusercontent.com/kevin-larry-bauer/family-calendar/main/install-kiosk.sh | bash -s -- https://github.com/your-username/family-calendar.git
+```
+
+**Option 2: Download and run interactively**
+```bash
+wget https://raw.githubusercontent.com/kevin-larry-bauer/family-calendar/main/install-kiosk.sh
+chmod +x install-kiosk.sh
+./install-kiosk.sh
 ```
 
 See [RASPBERRY_PI_SETUP.md](RASPBERRY_PI_SETUP.md) for detailed instructions.

@@ -8,8 +8,25 @@ set -e
 echo "🏠 Family Calendar Kiosk Installer"
 echo "=================================="
 
-# Get repository URL from user
-read -p "Enter your repository URL (e.g., https://github.com/username/family-calendar.git): " REPO_URL
+# Check if repository URL was provided as argument
+if [ -n "$1" ]; then
+    REPO_URL="$1"
+    echo "📍 Using repository URL: $REPO_URL"
+else
+    # Try to read from terminal (works when script is run directly)
+    if [ -t 0 ]; then
+        read -p "Enter your repository URL (e.g., https://github.com/username/family-calendar.git): " REPO_URL
+    else
+        echo "❌ Repository URL is required when running via pipe"
+        echo "💡 Usage: $0 <repository-url>"
+        echo "💡 Example: $0 https://github.com/username/family-calendar.git"
+        echo "💡 Or download and run directly:"
+        echo "   wget https://raw.githubusercontent.com/username/family-calendar/main/install-kiosk.sh"
+        echo "   chmod +x install-kiosk.sh"
+        echo "   ./install-kiosk.sh"
+        exit 1
+    fi
+fi
 
 if [ -z "$REPO_URL" ]; then
     echo "❌ Repository URL is required"
@@ -61,4 +78,5 @@ echo ""
 echo "🔍 Useful commands:"
 echo "   ./startup-kiosk.sh logs     # View logs"
 echo "   ./startup-kiosk.sh update   # Update app"
+echo "   ./test-kiosk.sh             # Test installation"
 echo "   sudo systemctl status family-calendar-kiosk  # Check service"

@@ -11,6 +11,21 @@ This guide will help you set up your Raspberry Pi as a dedicated family calendar
 
 ## Quick Setup
 
+**Option 1: One-line install (with your repo URL)**
+```bash
+curl -s https://raw.githubusercontent.com/your-username/family-calendar/main/install-kiosk.sh | bash -s -- https://github.com/your-username/family-calendar.git
+```
+
+**Option 2: Download and run interactively**
+```bash
+cd /home/pi
+wget https://raw.githubusercontent.com/your-username/family-calendar/main/install-kiosk.sh
+chmod +x install-kiosk.sh
+./install-kiosk.sh
+```
+
+**Option 3: Manual setup**
+
 1. **Download the scripts to your Raspberry Pi:**
    ```bash
    cd /home/pi
