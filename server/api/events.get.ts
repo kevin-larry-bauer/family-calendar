@@ -92,11 +92,7 @@ export default defineEventHandler(async (event) => {
           }
           
           // Check if this is a recurring event
-          if (event.isRecurring()) {
-            if (event.summary === 'Movies at the SCERA!') {
-              console.log('Found specific event: Movies at the SCERA!', event)
-            }
-            
+          if (event.isRecurring()) {            
             // Get exception dates (EXDATE) - dates where the recurring event should be excluded
             const exceptionDates = new Set()
             const exdateProps = vevent.getAllProperties('exdate')
