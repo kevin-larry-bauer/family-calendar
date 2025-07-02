@@ -115,7 +115,7 @@ EOF
 }
 
 # Function to build and start the application
-build_and_start_app() {
+build_app() {
     log_message "Building and starting the application..."
     
     cd "$REPO_DIR"
@@ -137,7 +137,9 @@ build_and_start_app() {
         log_message "Build failed"
         exit 1
     fi
-    
+}
+
+start_app() {
     # Stop any existing PM2 processes
     pm2 delete family-calendar 2>/dev/null || true
     
@@ -264,17 +266,18 @@ main() {
     wait_for_network
     
     # Install dependencies
-    install_dependencies
+    # install_dependencies
     
     # Setup repository
-    setup_repository
+    # setup_repository
     
     # Setup calendar configuration
-    setup_calendar_config
+    # setup_calendar_config
     
     # Build and start application
-    build_and_start_app
-    
+    # build_app
+    start_app
+
     # Setup auto-refresh
     setup_auto_refresh
     
@@ -295,7 +298,8 @@ case "$1" in
     "update")
         log_message "Updating application..."
         setup_repository
-        build_and_start_app
+        build_app
+        start_app
         ;;
     "logs")
         tail -f "$LOG_FILE"
