@@ -123,7 +123,9 @@
 
           <!-- Inspirational Quotes Section -->
           <div class="mt-8 flex flex-col items-center justify-center min-h-[80px]">
-            <div class="text-2xl italic text-gray-200 text-center transition-opacity duration-500" :key="currentQuoteIndex">
+            <div v-if="quotesLoading" class="text-gray-400 text-center">Loading quotes...</div>
+            <div v-else-if="quotesError" class="text-red-400 text-center">Failed to load quotes</div>
+            <div v-else class="text-2xl italic text-gray-200 text-center transition-opacity duration-500" :key="currentQuoteIndex">
               {{ quotes[currentQuoteIndex] }}
             </div>
           </div>
@@ -134,8 +136,30 @@
 </template>
 
 <script setup>
-import quotesData from '../quotes.json'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+
+// Quotes state
+const quotes = ref([])
+const currentQuoteIndex = ref(0)
+const quotesLoading = ref(true)
+const quotesError = ref(null)
+
+const fetchQuotes = async () => {
+  try {
+    quotesLoading.value = true
+    const response = await fetch('https://kevin-larry-bauer.github.io/quote-archive/quotes.json')
+    const data = await response.json()
+    // Support both array and {quotes: array} formats
+    const arr = Array.isArray(data) ? data : data.quotes
+    quotes.value = arr.map(q => `"${q.text}" – ${q.author}`)
+    currentQuoteIndex.value = Math.floor(Math.random() * quotes.value.length)
+    quotesError.value = null
+  } catch (e) {
+    quotesError.value = e
+  } finally {
+    quotesLoading.value = false
+  }
+}
 
 // Fetch events from our API (non-blocking)
 const data = ref(null)
@@ -167,6 +191,7 @@ let dailyReloadInterval
 onMounted(() => {
   updateTime()
   fetchEvents()
+  fetchQuotes()
   timeInterval = setInterval(updateTime, 1000)
   
   // Refresh calendar events every 15 minutes (900,000 ms)
@@ -266,22 +291,28 @@ const weekRangeText = computed(() => {
 })
 
 // Inspirational Quotes
-const quotes = quotesData.map(q => `"${q.text}" – ${q.author}`)
-const currentQuoteIndex = ref(Math.floor(Math.random() * quotes.length))
 let quoteInterval
+let quoteReloadInterval
 
 onMounted(() => {
   quoteInterval = setInterval(() => {
+    if (!quotes.value.length) return
     let nextIndex
     do {
-      nextIndex = Math.floor(Math.random() * quotes.length)
+      nextIndex = Math.floor(Math.random() * quotes.value.length)
     } while (nextIndex === currentQuoteIndex.value)
     currentQuoteIndex.value = nextIndex
   }, 20000)
+
+  // Reload quotes every 20 minutes
+  quoteReloadInterval = setInterval(() => {
+    fetchQuotes()
+  }, 20 * 60 * 1000)
 })
 
 onUnmounted(() => {
   if (quoteInterval) clearInterval(quoteInterval)
+  if (quoteReloadInterval) clearInterval(quoteReloadInterval)
 })
 
 // Helper to get event duration in minutes
