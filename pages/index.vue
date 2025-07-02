@@ -74,21 +74,28 @@
             <div 
               v-for="day in calendarDays" 
               :key="day.date"
-              class="bg-gray-800 rounded-lg p-3 flex flex-col min-h-75"
+              class="rounded-lg p-3 flex flex-col min-h-75"
               :class="{
-                'opacity-50': !day.isCurrentMonth
+                'opacity-50': day.isPast,
+                'bg-gray-800': !day.isToday,
+                'border-2 border-blue-400 today-highlight': day.isToday
               }"
             >
               <!-- Date Number -->
-              <div 
-                class="text-right mb-2 font-medium"
-                :class="{
-                  'text-blue-400': day.isToday,
-                  'text-gray-300': !day.isToday,
-                  'text-gray-500': !day.isCurrentMonth
-                }"
-              >
-                {{ day.dayNumber }}
+              <div class="text-right mb-2 flex items-center justify-end">
+                <div v-if="day.isToday" class="text-xs font-bold text-blue-200 bg-blue-600 px-2 py-1 rounded-full mr-2">
+                  TODAY
+                </div>
+                <div 
+                  class="font-bold text-xl"
+                  :class="{
+                    'text-blue-200 bg-blue-600 rounded-full w-8 h-8 flex items-center justify-center': day.isToday,
+                    'text-gray-300': day.isPast && !day.isToday,
+                    'text-gray-500': (!day.isToday && !day.isPast)
+                  }"
+                >
+                  {{ day.dayNumber }}
+                </div>
               </div>
 
               <!-- Events for this day -->
@@ -236,7 +243,8 @@ const calendarDays = computed(() => {
       dayNumber: date.getDate(),
       isToday: date.toDateString() === today.toDateString(),
       isCurrentMonth: date.getMonth() === today.getMonth(),
-      events: dayEvents
+      isPast: date < today,
+      events: dayEvents      
     })
   }
   
@@ -358,5 +366,33 @@ useHead({
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-word;
+}
+
+/* Enhanced today highlight with animation */
+.today-highlight {
+  animation: pulse-glow 2s ease-in-out infinite alternate;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #1d4ed8 100%);
+  position: relative;
+}
+
+.today-highlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+@keyframes pulse-glow {
+  from {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.1);
+  }
+  to {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), 0 0 30px rgba(59, 130, 246, 0.2);
+  }
 }
 </style>
