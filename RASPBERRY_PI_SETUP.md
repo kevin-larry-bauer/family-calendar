@@ -95,6 +95,11 @@ chmod +x install-kiosk.sh
 ./startup-kiosk.sh logs
 ```
 
+### Debug application issues:
+```bash
+./startup-kiosk.sh debug
+```
+
 ### Update application:
 ```bash
 ./startup-kiosk.sh update
@@ -108,6 +113,12 @@ chmod +x install-kiosk.sh
 ### Check service status:
 ```bash
 sudo systemctl status family-calendar-kiosk
+```
+
+### Check PM2 processes:
+```bash
+pm2 status
+pm2 logs family-calendar
 ```
 
 ## Configuration Files

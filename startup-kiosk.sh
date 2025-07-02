@@ -143,24 +143,61 @@ build_and_start_app() {
     
     # Start the application with PM2
     log_message "Starting application with PM2..."
-    if pm2 start npm --name "family-calendar" -- start; then
-        log_message "Application started successfully"
-        pm2 save
+    if [ -f ".output/server/index.mjs" ]; then
+        # Use the proper start script for production
+        if pm2 start npm --name "family-calendar" -- start; then
+            log_message "Application started successfully using npm start"
+            pm2 save
+        else
+            log_message "Failed to start with npm start, trying direct node execution..."
+            if pm2 start .output/server/index.mjs --name "family-calendar"; then
+                log_message "Application started successfully using direct execution"
+                pm2 save
+            else
+                log_message "Failed to start application"
+                exit 1
+            fi
+        fi
     else
-        log_message "Failed to start application"
-        exit 1
+        log_message "Built output not found (.output/server/index.mjs), build may have failed"
+        log_message "Checking build output..."
+        ls -la .output/ 2>/dev/null || log_message "No .output directory found"
+        log_message "Trying npm preview as fallback..."
+        if pm2 start npm --name "family-calendar" -- run preview; then
+            log_message "Application started successfully using npm preview"
+            pm2 save
+        else
+            log_message "Failed to start application with preview mode"
+            exit 1
+        fi
     fi
     
     # Wait for the application to be ready
     log_message "Waiting for application to be ready..."
+    APPLICATION_READY=false
     for i in {1..30}; do
         if curl -s "http://localhost:$PORT" > /dev/null; then
-            log_message "Application is ready"
+            log_message "Application is ready and responding"
+            APPLICATION_READY=true
             break
         fi
         log_message "Waiting for application... ($i/30)"
         sleep 2
     done
+    
+    if [ "$APPLICATION_READY" = false ]; then
+        log_message "Application failed to start properly. Checking PM2 status..."
+        pm2 status
+        pm2 logs family-calendar --lines 20
+        log_message "Attempting to restart application..."
+        pm2 restart family-calendar
+        sleep 5
+        if curl -s "http://localhost:$PORT" > /dev/null; then
+            log_message "Application started after restart"
+        else
+            log_message "Application still not responding. Check logs manually."
+        fi
+    fi
 }
 
 # Function to start browser in kiosk mode
@@ -262,6 +299,17 @@ case "$1" in
         ;;
     "logs")
         tail -f "$LOG_FILE"
+        ;;
+    "debug")
+        log_message "=== Debug Information ==="
+        log_message "PM2 Status:"
+        pm2 status
+        log_message "PM2 Logs (last 20 lines):"
+        pm2 logs family-calendar --lines 20
+        log_message "Application status:"
+        curl -I "http://localhost:$PORT" 2>/dev/null || log_message "Application not responding"
+        log_message "Process information:"
+        ps aux | grep -E "(node|npm|family-calendar)" | grep -v grep
         ;;
     *)
         main
