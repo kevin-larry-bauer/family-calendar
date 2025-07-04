@@ -481,7 +481,7 @@ const getEventStyleDayView = (event) => {
   const end = new Date(event.end);
   // Only show events between 7am (420) and 10pm (1320)
   const gridStart = 7 * 60;
-  const gridEnd = 21 * 60;
+  const gridEnd = 22 * 60;
   let startMinutes = start.getHours() * 60 + start.getMinutes();
   let endMinutes = end.getHours() * 60 + end.getMinutes();
   // Clamp to grid
