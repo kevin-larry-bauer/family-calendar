@@ -215,19 +215,34 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
+import { fetchAndParseCalendars } from "~/utils/calendar.js";
 
 // Quotes state
 const quotes = ref([]);
 const currentQuoteIndex = ref(0);
 const quotesLoading = ref(true);
 const quotesError = ref(null);
+const config = ref({ calendars: [], quoteUrl: '' });
+
+function loadConfig() {
+  try {
+    const raw = localStorage.getItem('familyCalendarConfig');
+    if (raw) {
+      config.value = JSON.parse(raw);
+    }
+  } catch (e) {
+    // fallback: empty config
+    config.value = { calendars: [], quoteUrl: '' };
+  }
+}
+
+// Config is loaded in the main onMounted block
 
 const fetchQuotes = async () => {
   try {
     quotesLoading.value = true;
-    const response = await fetch(
-      "https://kevin-larry-bauer.github.io/quote-archive/quotes.json"
-    );
+    let url = config.value.quoteUrl;
+    const response = await fetch(url);
     const data = await response.json();
     // Support both array and {quotes: array} formats
     const arr = Array.isArray(data) ? data : data.quotes;
@@ -241,7 +256,7 @@ const fetchQuotes = async () => {
   }
 };
 
-// Fetch events from our API (non-blocking)
+// Fetch events client-side from configured calendar URLs
 const data = ref(null);
 const pending = ref(true);
 const error = ref(null);
@@ -249,8 +264,13 @@ const error = ref(null);
 const fetchEvents = async () => {
   try {
     pending.value = true;
-    const response = await $fetch("/api/events");
-    data.value = response;
+    const calendars = config.value.calendars || [];
+    if (calendars.length === 0) {
+      data.value = { events: [], lastUpdated: new Date().toISOString(), calendarsProcessed: 0 };
+      return;
+    }
+    const result = await fetchAndParseCalendars(calendars);
+    data.value = result;
     error.value = null;
   } catch (e) {
     error.value = e;
@@ -268,7 +288,8 @@ let timeInterval;
 let refreshInterval;
 let dailyReloadInterval;
 
-onMounted(() => {
+onMounted(async () => {
+  loadConfig();
   updateTime();
   fetchEvents();
   fetchQuotes();
