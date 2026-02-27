@@ -1,136 +1,98 @@
 # Family Calendar
 
-A Nuxt.js application that displays events from multiple Google Calendar feeds in a beautiful, unified interface.
+A Nuxt.js application that displays events from multiple Google Calendar feeds in a beautiful, unified dashboard. Configuration is done entirely in the browser — no server-side config files needed.
 
 ## Features
 
 - 📅 Display events from multiple Google Calendar feeds
 - 🎨 Color-coded events by calendar source
 - 📱 Responsive design that works on all devices
-- ⚡ Real-time calendar feed parsing
-- 🔧 Easy configuration via JSON file
+- ⚡ Client-side iCal parsing with automatic refresh
+- 🔧 In-browser configuration page (`/config`) — no config files
+- 💬 Inspirational quotes from a configurable JSON URL
 - 🖥️ **Raspberry Pi kiosk mode support** - Perfect for dedicated displays!
 
-## 🍓 Raspberry Pi Kiosk Setup
+## 🍓 Kiosk Setup
 
-Transform your Raspberry Pi into a dedicated family calendar display! The included scripts will:
+Transform any computer into a dedicated family calendar display! For a raspberry pi see [RASPBERRY_PI_SETUP.md](RASPBERRY_PI_SETUP.md) for detailed instructions.
 
-- ✅ Automatically pull the latest code on startup
-- ✅ Build for production
-- ✅ Launch in full-screen kiosk mode
-- ✅ Auto-refresh hourly
-- ✅ Restart automatically if it crashes
+The included `startup-kiosk.sh` script launches Chromium in full-screen kiosk mode pointed at the app.
 
-### Quick Install on Raspberry Pi:
-
-**Option 1: With repository URL as argument**
-```bash
-curl -s https://raw.githubusercontent.com/kevin-larry-bauer/family-calendar/main/install-kiosk.sh | bash -s -- https://github.com/your-username/family-calendar.git
-```
-
-**Option 2: With custom installation directory**
-```bash
-curl -s https://raw.githubusercontent.com/kevin-larry-bauer/family-calendar/main/install-kiosk.sh | bash -s -- https://github.com/your-username/family-calendar.git /home/pi/apps
-```
-
-**Option 3: Download and run interactively**
-```bash
-wget https://raw.githubusercontent.com/kevin-larry-bauer/family-calendar/main/install-kiosk.sh
-chmod +x install-kiosk.sh
-./install-kiosk.sh
-```
-
-See [RASPBERRY_PI_SETUP.md](RASPBERRY_PI_SETUP.md) for detailed instructions.
-
+Before running in kiosk mode, visit localhost:3000/config to set the URLs for Google Calendar and for your quote list (see instructions below)
 ## Setup
 
-Make sure to install dependencies:
+Install dependencies:
 
 ```bash
-# npm
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
 ```
 
 ## Calendar Configuration
 
-1. Create a `calendar-locations.json` file in the root directory
-2. Add your Google Calendar ICS URLs following this format:
+Calendar URLs and the quote file URL are configured directly in the browser via the built-in configuration page — no server-side config files needed.
+
+1. Start the app and navigate to `/config`
+2. Add your Google Calendar ICS URLs, each with a label and color
+3. Optionally set a quotes JSON URL
+4. Click **Save** — settings are stored in the browser's `localStorage`
+
+The main dashboard (`/`) reads these settings on load and fetches calendar data client-side through a server proxy (to avoid CORS restrictions).
+
+### localStorage format
+
+The config is stored under the key `familyCalendarConfig`:
 
 ```json
 {
   "calendars": [
     {
-      "name": "Family Calendar",
-      "url": "https://calendar.google.com/calendar/ical/your-calendar-id@group.calendar.google.com/public/basic.ics",
+      "label": "Family Calendar",
+      "url": "https://calendar.google.com/calendar/ical/your-calendar-id/public/basic.ics",
       "color": "#4285f4"
     }
-  ]
+  ],
+  "quoteUrl": "https://example.com/quotes.json"
 }
 ```
 
 See `CALENDAR_SETUP.md` for detailed instructions on getting Google Calendar ICS URLs.
 
-**Note:** The `calendar-locations.json` file is ignored by git for privacy. Each user needs to create their own configuration file.
+### Quote file format
+
+The quote URL should return JSON — either a plain array or an object with a `quotes` key. Each entry needs `text` and `author` fields:
+
+```json
+{
+  "quotes": [
+    { "text": "The best time to plant a tree was 20 years ago. The second best time is now.", "author": "Chinese Proverb" },
+    { "text": "Be yourself; everyone else is already taken.", "author": "Oscar Wilde" }
+  ]
+}
+```
+
+A plain array format also works:
+
+```json
+[
+  { "text": "Stay hungry, stay foolish.", "author": "Steve Jobs" }
+]
+```
 
 ## Development Server
 
 Start the development server on `http://localhost:3000`:
 
 ```bash
-# npm
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
 ## Production
 
-Build the application for production:
+Build and run for production:
 
 ```bash
-# npm
 npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
+npm run start
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.

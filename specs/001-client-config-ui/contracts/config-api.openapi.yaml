@@ -1,0 +1,41 @@
+openapi: 3.0.3
+info:
+  title: Config API
+  version: 1.0.0
+  description: API contract for client-side config UI (localstorage)
+paths:
+  /config:
+    get:
+      summary: Get calendar and quote URLs from localstorage
+      responses:
+        '200':
+          description: CalendarConfig object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarConfig'
+    post:
+      summary: Set calendar and quote URLs in localstorage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarConfig'
+      responses:
+        '200':
+          description: Success
+components:
+  schemas:
+    CalendarConfig:
+      type: object
+      properties:
+        calendarUrls:
+          type: array
+          items:
+            type: string
+        quoteUrl:
+          type: string
+      required:
+        - calendarUrls
+        - quoteUrl
