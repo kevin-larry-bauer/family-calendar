@@ -96,8 +96,8 @@ export function parseICalData(icalData, calendar) {
 
   // --- Date range for expansion ---
   const now = new Date();
-  const pastLimit = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const futureLimit = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+  const pastLimit = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000);
+  const futureLimit = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);
 
   const events = [];
 
@@ -170,24 +170,40 @@ function expandRecurringEvent(
     if (startDate > futureLimit) break;
     if (exceptionDates.has(startTime)) continue;
 
-    // Use modified instance if available
-    let eventToUse = event;
+    // Check if this occurrence has been modified (moved to a different date)
     if (eventExceptions.has(startTime)) {
-      eventToUse = new ICAL.Event(eventExceptions.get(startTime));
-    }
+      // The exception replaces this occurrence entirely – emit the
+      // exception's own DTSTART/DTEND so it appears on the correct day.
+      const exceptionEvent = new ICAL.Event(eventExceptions.get(startTime));
+      const exStart = exceptionEvent.startDate.toJSDate();
+      const exEnd = exceptionEvent.endDate.toJSDate();
 
-    if (startDate >= pastLimit && startDate <= futureLimit) {
-      const duration = eventToUse.endDate.subtractDate(eventToUse.startDate);
+      if (exStart >= pastLimit && exStart <= futureLimit) {
+        events.push({
+          id: `${calendar.label}-${exceptionEvent.uid}-${exStart.getTime()}`,
+          title: exceptionEvent.summary,
+          start: exStart.toISOString(),
+          end: exEnd.toISOString(),
+          description: exceptionEvent.description || "",
+          location: exceptionEvent.location || "",
+          calendar: calendar.label,
+          color: calendar.color,
+          isRecurring: true,
+        });
+      }
+    } else if (startDate >= pastLimit && startDate <= futureLimit) {
+      // Normal (unmodified) occurrence
+      const duration = event.endDate.subtractDate(event.startDate);
       const endIcal = next.clone();
       endIcal.addDuration(duration);
 
       events.push({
-        id: `${calendar.label}-${eventToUse.uid}-${startTime}`,
-        title: eventToUse.summary,
+        id: `${calendar.label}-${event.uid}-${startTime}`,
+        title: event.summary,
         start: startDate.toISOString(),
         end: endIcal.toJSDate().toISOString(),
-        description: eventToUse.description || "",
-        location: eventToUse.location || "",
+        description: event.description || "",
+        location: event.location || "",
         calendar: calendar.label,
         color: calendar.color,
         isRecurring: true,
