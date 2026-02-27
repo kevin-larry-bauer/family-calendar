@@ -6,62 +6,34 @@ This guide will help you set up your Raspberry Pi as a dedicated family calendar
 
 - Raspberry Pi with Raspberry Pi OS installed
 - Network connectivity (WiFi or Ethernet)
-- Your family calendar repository URL
-- Calendar configuration file (`calendar-locations.json`)
+- Node.js installed
 
 ## Quick Setup
 
-**Option 1: One-line install (with your repo URL)**
-```bash
-curl -s https://raw.githubusercontent.com/your-username/family-calendar/main/install-kiosk.sh | bash -s -- https://github.com/your-username/family-calendar.git
-```
-
-**Option 2: One-line install with custom directory**
-```bash
-curl -s https://raw.githubusercontent.com/your-username/family-calendar/main/install-kiosk.sh | bash -s -- https://github.com/your-username/family-calendar.git /home/pi/apps
-```
-
-**Option 3: Download and run interactively**
-```bash
-cd /home/pi
-wget https://raw.githubusercontent.com/your-username/family-calendar/main/install-kiosk.sh
-chmod +x install-kiosk.sh
-./install-kiosk.sh
-```
-*(This will prompt for both repository URL and installation directory)*
-
-**Option 3: Manual setup**
-
-1. **Download the scripts to your Raspberry Pi:**
+1. **Clone the repository and install:**
    ```bash
    cd /home/pi
-   wget https://raw.githubusercontent.com/your-username/family-calendar/main/startup-kiosk.sh
-   wget https://raw.githubusercontent.com/your-username/family-calendar/main/family-calendar-kiosk.service
+   git clone https://github.com/your-username/family-calendar.git
+   cd family-calendar
+   npm install
+   npm run build
+   ```
+
+2. **Install the startup script and service:**
+   ```bash
    chmod +x startup-kiosk.sh
-   ```
-
-2. **Edit the configuration in `startup-kiosk.sh`:**
-   ```bash
-   nano startup-kiosk.sh
-   ```
-   
-   Update these variables:
-   - `REPO_URL`: Your GitHub repository URL
-   - `REPO_DIR`: Directory where you want the code (default: `/home/pi/family-calendar`)
-
-3. **Install and enable the systemd service:**
-   ```bash
    sudo cp family-calendar-kiosk.service /etc/systemd/system/
    sudo systemctl daemon-reload
    sudo systemctl enable family-calendar-kiosk.service
    ```
 
-4. **Test the setup:**
+3. **Start the app and configure calendars:**
    ```bash
-   ./startup-kiosk.sh
+   npm run start &
    ```
+   Then open `http://localhost:3000/config` to add your calendar URLs and quote feed.
 
-5. **Reboot to test automatic startup:**
+4. **Reboot to test kiosk mode:**
    ```bash
    sudo reboot
    ```
@@ -124,18 +96,32 @@ pm2 logs family-calendar
 ## Configuration Files
 
 ### Calendar Configuration
-Create `/home/pi/family-calendar/calendar-locations.json`:
-```json
-{
-  "calendars": [
-    {
-      "name": "Family",
-      "url": "https://calendar.google.com/calendar/ical/your-calendar-id/basic.ics",
-      "color": "#4285f4"
-    }
-  ]
-}
-```
+
+Calendar URLs and quotes are configured in the browser. After the app is running, open `http://localhost:3000/config` to add your Google Calendar ICS URLs.
+
+For each calendar you add, provide:
+- **Label** — a display name (e.g. "Family Calendar")
+- **URL** — a Google Calendar ICS link
+- **Color** — a hex color to identify this calendar's events
+
+## How to get Google Calendar ICS URLs:
+
+1. Open Google Calendar in your web browser
+2. Click on the three dots next to the calendar you want to share
+3. Select "Settings and sharing"
+4. Scroll down to "Access permissions for events"
+5. Check "Make available to public" (if you want it public)
+6. Scroll down to "Integrate calendar"
+7. Copy the "Public URL to this calendar" (the .ics link)
+
+## Color Options:
+
+You can use any valid CSS color for the `color` field:
+- Hex colors: `#4285f4`, `#ff5722`
+- Color names: `red`, `blue`, `green`
+- RGB: `rgb(66, 133, 244)`
+
+The color will be used to identify events from different calendars in the UI.
 
 ### Raspberry Pi Display Settings
 For optimal display, consider adding to `/boot/config.txt`:
