@@ -1,40 +1,36 @@
 <template>
-  <div class="h-screen w-screen bg-gray-900 text-white overflow-hidden">
+  <div class="h-screen w-screen bg-[#111827] text-white overflow-hidden">
     <div class="flex h-full">
-      <!-- Left Sidebar (25% width) -->
-      <div class="w-1/5 bg-gray-800 p-6 flex flex-col">
+      <!-- Left Sidebar -->
+      <div class="w-1/5 sidebar-glass p-6 flex flex-col border-r border-white/10">
         <!-- Clock -->
-        <div class="mb-8">
-          <div class="text-6xl font-light mb-2">{{ currentTime }}</div>
-          <div class="text-xl text-gray-300">{{ currentDate }}</div>
+        <div class="mb-10">
+          <div class="text-6xl font-extralight tracking-tight mb-1 text-white">{{ currentTime }}</div>
+          <div class="text-xl font-light text-white/70 tracking-wide">{{ currentDate }}</div>
         </div>
 
         <!-- Today's Agenda -->
         <div class="flex-1 overflow-hidden">
+          <div class="text-sm font-semibold uppercase tracking-widest text-white/50 mb-3">Today's Schedule</div>
           <!-- Day View Time Grid (7am to 10pm) -->
-          <div class="relative h-full overflow-y-auto bg-gray-800 rounded-lg">
-            <div
-              class="absolute left-0 top-0 w-full h-full pointer-events-none"
-            >
-              <!-- Horizontal line above 7am -->
+          <div class="relative h-full overflow-y-auto rounded-xl">
+            <div class="absolute left-0 top-0 w-full h-full pointer-events-none">
               <div
-                class="absolute left-0 top-0 w-full border-b border-gray-700"
+                class="absolute left-0 top-0 w-full border-b border-white/5"
                 style="height: 0"
               ></div>
               <div
                 v-for="hour in 15"
                 :key="hour"
-                class="h-[60px] border-b border-gray-700 flex items-start"
+                class="h-[60px] border-b border-white/10 flex items-start"
               >
                 <span
-                  class="w-12 text-xs text-gray-400 text-right pr-2 select-none"
+                  class="w-12 text-xs text-white/40 text-right pr-2 select-none font-medium"
                   style="min-width: 3rem"
-                  >{{ formatHour(hour + 6) }}</span
-                >
+                >{{ formatHour(hour + 6) }}</span>
               </div>
             </div>
             <div class="relative z-10" style="height: 900px">
-              <!-- 15 hours * 60px per hour = 900px -->
               <div
                 v-for="event in todayEvents"
                 :key="event.id"
@@ -43,22 +39,22 @@
                     borderLeftColor: event.color || '#60a5fa',
                   })
                 "
-                class="absolute left-16 right-2 bg-gray-700 rounded-lg border-l-4 py-1 px-2 shadow-md"
+                class="absolute left-16 right-2 event-card-sidebar rounded-lg border-l-3 py-1.5 px-2.5 shadow-lg"
                 :class="{ 'border-blue-400': !event.color }"
               >
-                <div class="font-medium text-xs">
+                <div class="font-medium text-sm text-white">
                   {{ event.title }}
-                  <span v-if="isAllDayEvent(event)" class="text-xs text-gray-300"> (all day)</span>
+                  <span v-if="isAllDayEvent(event)" class="text-xs text-white/60 ml-1">all day</span>
                 </div>
                 <div
                   v-if="!isAllDayEvent(event) && getEventDurationMinutes(event) >= 45"
-                  class="text-xs text-gray-300"
+                  class="text-xs text-white/60 mt-0.5"
                 >
-                  {{ formatTime(event.start) }} - {{ formatTime(event.end) }}
+                  {{ formatTime(event.start) }} – {{ formatTime(event.end) }}
                 </div>
                 <div
                   v-if="event.location"
-                  class="text-xs text-gray-400 flex items-center"
+                  class="text-xs text-white/50 flex items-center mt-0.5"
                 >
                   <span class="mr-1">📍</span>
                   {{ event.location }}
@@ -69,42 +65,44 @@
         </div>
       </div>
 
-      <!-- Right Main Area (75% width) -->
-      <div class="flex-1 p-6">
-        <div class="h-full">
+      <!-- Right Main Area -->
+      <div class="flex-1 p-6 pl-8">
+        <div class="h-full flex flex-col">
           <!-- Header -->
-          <div class="mb-6">
-            <div class="flex items-center justify-between">
-              <h1 class="text-4xl font-light">
-                Family Calendar: {{ weekRangeText }}
-              </h1>
-              <div class="text-right">
+          <div class="mb-5">
+            <div class="flex items-end justify-between">
+              <div>
+                <h1 class="text-4xl font-light tracking-tight text-white">
+                  {{ weekRangeText }}
+                </h1>
+              </div>
+              <div class="text-right pb-1">
                 <div
                   v-if="pending"
-                  class="flex items-center text-blue-400 text-sm"
+                  class="flex items-center text-blue-400/70 text-xs font-medium"
                 >
                   <div
-                    class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400 mr-2"
+                    class="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-400/70 mr-2"
                   ></div>
-                  Updating...
+                  Syncing
                 </div>
                 <div
                   v-else-if="data?.lastUpdated"
-                  class="text-gray-400 text-sm"
+                  class="text-white/40 text-sm font-medium"
                 >
-                  Last updated: {{ formatLastUpdated(data.lastUpdated) }}
+                  Updated {{ formatLastUpdated(data.lastUpdated) }}
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Two-Week Calendar Grid -->
-          <div class="grid grid-cols-7 gap-2 h-[80vh]">
+          <div class="grid grid-cols-7 gap-1.5 flex-1">
             <!-- Day Headers -->
             <div
               v-for="day in dayHeaders"
               :key="day"
-              class="text-center text-gray-300 font-medium py-2 text-lg"
+              class="text-center text-white/50 font-medium text-sm uppercase tracking-widest py-2"
             >
               {{ day }}
             </div>
@@ -528,17 +526,29 @@ useHead({
 </script>
 
 <style scoped>
+/* Sidebar glass effect */
+.sidebar-glass {
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.97) 0%, rgba(17, 24, 39, 0.99) 100%);
+  backdrop-filter: blur(20px);
+}
+
+/* Event cards in sidebar */
+.event-card-sidebar {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
 /* Hide scrollbar for day event containers */
 .day-events-container {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .day-events-container::-webkit-scrollbar {
-  display: none; /* Safari and Chrome */
+  display: none;
 }
 
-/* Line clamp utility for text truncation */
+/* Line clamp */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -548,9 +558,8 @@ useHead({
   word-break: break-word;
 }
 
-/* Enhanced today highlight with animation */
+/* Today highlight */
 .today-highlight {
-  animation: pulse-glow 2s ease-in-out infinite alternate;
   background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #1d4ed8 100%);
   position: relative;
 }
@@ -562,23 +571,7 @@ useHead({
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(
-    circle at 20% 20%,
-    rgba(59, 130, 246, 0.1) 0%,
-    transparent 50%
-  );
   border-radius: inherit;
   pointer-events: none;
-}
-
-@keyframes pulse-glow {
-  from {
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3),
-      0 0 20px rgba(59, 130, 246, 0.1);
-  }
-  to {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5),
-      0 0 30px rgba(59, 130, 246, 0.2);
-  }
 }
 </style>
