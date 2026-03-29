@@ -1,5 +1,6 @@
 #!/bin/bash
 # Launch Chrome in kiosk mode
+cd ~/family-calendar
 
 git pull
 
@@ -27,5 +28,5 @@ google-chrome \
   --disable-save-password-bubble \
   --disable-password-manager-reauthentication \
   --disable-password-manager \
-  --app="https://localhost:3000"
+  --app="http://localhost:3000"
       
