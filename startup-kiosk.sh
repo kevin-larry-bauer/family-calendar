@@ -1,11 +1,14 @@
 #!/bin/bash
-# Launch Chrome in kiosk mode with no cursor
+# Launch Chrome in kiosk mode
 
-# Hide cursor using unclutter
-unclutter -idle 0.5 -root &
+git pull
+
+npm run build
+
+npm run start &
 
 # Launch Chromium in kiosk mode
-chromium-browser \
+google-chrome \
   --kiosk \
   --noerrdialogs \
   --disable-infobars \
@@ -24,5 +27,5 @@ chromium-browser \
   --disable-save-password-bubble \
   --disable-password-manager-reauthentication \
   --disable-password-manager \
-  --app="http://localhost:3000"
+  --app="https://localhost:3000"
       
